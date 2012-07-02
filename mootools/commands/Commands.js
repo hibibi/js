@@ -35,28 +35,28 @@ var Wait = new Class({
 
 var Func = new Class({
 	Extends: Command,
+	_scope:null,
 	_func: null,
 	_params: [],
 	_dispatcher: null,
 	_eventType: null,
-	initialize: function(func, params, dispatcher, eventType) {
+	initialize: function(scope, func, params, dispatcher, eventType) {
+		this._scope = scope;
 		this._func = func;
 		this._params = params.slice();
 		this._dispatcher = dispatcher;
 		this._eventType = eventType;
 	},
 	execute: function() {
-		this._func.apply(null, this._params);
 		if (this._dispatcher != null) {
 			this._dispatcher.addEvent(this._eventType, function() {
-				this.complete();
+				this.dispatchComplete();
 			}.bind(this));
+			this._func.apply(this._scope, this._params);
 		} else {
-			this.complete();
+			this._func.apply(this._scope, this._params);
+			this.dispatchComplete();
 		}
-	},
-	complete: function() {
-		this.dispatchComplete();
 	}
 });
 
@@ -64,8 +64,8 @@ var Listen = new Class({
 	Extends:Command,
 	_dispatcher:null,
 	_eventType:null,
-	initialize:function(dispather,eventType){
-		this._dispathcer = dispather;
+	initialize:function(dispatcher,eventType){
+		this._dispatcher = dispatcher;
 		this._eventType = eventType;
 	},
 	execute:function(){
@@ -91,25 +91,6 @@ var DoFxMorph = new Class({
 			this.dispatchComplete();
 		}.bind(this));
 		this._morph.start(this._options);
-	}
-});
-
-var DoTimeLineLite = new Class({
-	Extends:Command,
-	_timeline:null,
-	_options:null,
-	initialize:function(options){
-		this._timeline = new TimelineLite(options);
-		this._timeline.eventCallback('onComplete',function(){
-			this.dispatchComplete();
-		})
-		this._timeline.pause();
-	},
-	append:function(tween){
-		this._timeline.append(tween);
-	},
-	insert:function(tween){
-		this._timeline.insert(tween);
 	}
 });
 
