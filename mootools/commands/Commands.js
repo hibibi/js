@@ -28,12 +28,9 @@ var Wait = new Class({
 	execute: function() {
 		this.intervalId = setInterval(function() {
 			clearInterval(this.intervalId);
-			this.complete();
+			this.dispatchComplete();
 		}.bind(this), this._delay);
 	},
-	complete: function() {
-		this.dispatchComplete();
-	}
 });
 
 var Func = new Class({
@@ -76,7 +73,7 @@ var Listen = new Class({
 			this.dispatchComplete();
 		}.bind(this));
 	}
-})
+});
 
 var DoFxMorph = new Class({
 	Extends:Command,
@@ -133,7 +130,7 @@ var DoTweenLite = new Class({
 		t.eventCallback('onComplete', function() {
 			this.dispatchComplete();
 		}.bind(this));
-	},
+	}
 });
 
 var CommandList = new Class({
@@ -150,7 +147,7 @@ var CommandList = new Class({
 	},
 	execute:function(){
 		//console.log('execute');
-	},
+	}
 });
 
 var SerialList = new Class({
@@ -202,7 +199,13 @@ var Trace = new Class({
 		this._params = params;
 	},
 	execute: function() {
-		console.log(this._params);
+		//console.log(this._params);
+		if (!('console' in window)) {
+			window.console = {};
+			window.console.log = function(this._params){
+				return this._params;
+			};
+		}
 		this.dispatchComplete();
 	}
 });
