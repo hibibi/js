@@ -180,15 +180,15 @@ var Trace = new Class({
 		this._params = params;
 	},
 	execute: function() {
-		
+		console.log(this._params);
+		/*
 		if (!('console' in window)) {
 			window.console = {};
 			window.console.log = function(this._params){
 				return this._params;
 			};
-		}else{
-			console.log(this._params);
 		}
+		//*/
 		this.dispatchComplete();
 	}
 });
