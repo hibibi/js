@@ -1,7 +1,7 @@
 var Command = new Class({
 	Implements: [Events],
 	_scope: null,
-	_myfunc: null,
+	_func: null,
 	_params: [],
 	initialize: function(scope, func, params) {
 		this._scope = scope;
