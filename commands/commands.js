@@ -165,4 +165,4 @@ Trace.prototype = new Command();
 Trace.prototype.execute = function(){
     console.log(_params);
     _self.dispatchComplete();
-};​
+}
