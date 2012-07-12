@@ -6,31 +6,31 @@
  * @param {Array} params functionの引数です。
  */
 var Command = function(scope, func, params) {
-    _scope = scope;
-    _func = func;
-    _params = params.slice();
-    _self = this;
+    this.scope = scope;
+    this.func = func;
+    this.params = params ? params.slice() : [];
 };
 Command.prototype = new EventDispatcher();
 Command.prototype.execute = function() {
-    _func.apply(_scope, _params);
+    this.func.apply(this.scope, this.params);
+    this.dispatchComplete();
 };
-Command.prototype.dispatchComplate = function() {
-    this.dispatcheEvent('command_complete');
+Command.prototype.dispatchComplete = function() {
+    this.dispatchEvent('command_complete');
 };
 /**
  * 新しいWaitコマンドを作成します。
  * @param {Number} delay ミリ秒で指定します。
  */
 var Wait = function(delay) {
-    _delay = delay;
-    _self = this;
+    this.delay = delay;
 };
 Wait.prototype = new Command();
 Wait.prototype.execute = function() {
+    var home = this;
     setTimeout(function() {
-        _self.dispatchComplete();
-    }, delay);
+        home.dispatchComplete();
+    }, this.delay);
 };
 /**
  * 新しいFuncコマンドを作成します
@@ -41,21 +41,24 @@ Wait.prototype.execute = function() {
  * @param {String} eventType
  **/
 var Func = function(scope, func, params, dispatcher, eventType) {
-    _scope = scope;
-    _func = func;
-    _params = params.slice();
-    _dispathcer = dispatcher;
-    _eventType = _eventType;
+    this.scope = scope;
+    this.func = func;
+    this.params = params ? params.slice() : params;
+    this.dispatcher = dispatcher;
+    this.eventType = eventType;
 };
 Func.prototype = new Command();
 Func.prototype.execute = function() {
-    if (_dispatcher != null) {
-        _dispatcher.addEvent(_eventType, function() {
-            _self.dispatchComplete();
+	var home = this;
+    if (this.dispatcher != null) {
+        this.dispatcher.addEventListener(this.eventType, function() {
+            home.dispatchComplete();
         });
+        this.func.apply(this.scope, this.params);
     } else {
-        _func.apply(_scope, _params);
-        _self.dispatchComplete();
+    console.log('nodis')
+        this.func.apply(this.scope, this.params);
+        this.dispatchComplete();
     }
 };
 /**
@@ -63,15 +66,16 @@ Func.prototype.execute = function() {
  * param {Object} dispatcher
  * param {String} eventType
  **/
-var Listen = function(disptcher, eventType) {
-    _dispatcher = dispatcher;
-    _eventtype = eventType;
-    _self = this;
+var Listen = function(dispatcher, eventType) {
+    this.dispatcher = dispatcher;
+    this.eventType = eventType;
 };
 Listen.prototype = new Command();
-Listen.prptotype.execute = function() {
-    _dispatcher.addEvent(_eventType, function() {
-        _self.dispatchComplete();
+Listen.prototype.execute = function() {
+    var home = this;
+    console.log(this.dispatcher)
+    this.dispatcher.addEventListener(this.eventType, function() {
+        home.dispatchComplete();
     });
 };
 /**
@@ -82,17 +86,17 @@ Listen.prptotype.execute = function() {
  * param {Object} options
  **/
 var DoTweenLite = function(angle, target, time, options) {
-    _angle = angle ? angle : 'to';
-    _target = target;
-    _time = time;
-    _options = options;
-    _self = this;
+    this.angle = angle ? angle : 'to';
+    this.target = target;
+    this.time = time;
+    this.options = options;
 };
 DoTweenLite.prototype = new Command();
 DoTweenLite.prototype.execute = function() {
-    var t = TweenLite[_angle](_target, _time, _options);
+	var home = this;
+    var t = TweenLite[this.angle](this.target, this.time, this.options);
     t.eventCallback('onComplete', function() {
-        _self.dispatchComplete();
+        home.dispatchComplete();
     });
 };
 /**
@@ -100,12 +104,16 @@ DoTweenLite.prototype.execute = function() {
  * param {Array} commands
  **/
 var CommandList = function(commands) {
-    _commands = commands.slice();
-    _count = 0;
+    this.commands = commands ? commands.slice() : [];
+    this.count = 0;
 };
 CommandList.prototype = new Command();
-CommandList.prototype.addCommand = function(command) {
-    _commands.push(command);
+CommandList.prototype.addCommand = function() {
+	if(arguments){
+    	for(var i=0; i<arguments.length; i++){
+    		this.commands.push(arguments[i]);
+    	}
+    }
 };
 CommandList.prototype.execute = function() {
 
@@ -115,54 +123,60 @@ CommandList.prototype.execute = function() {
  * param {Array} param commands
  **/
 var SerialList = function(commands) {
-    this.constructor(commands);
-    _currentCommand = null;
+	
+    this.commands = commands ? commands.slice() : [];
+    this.currentCommand = null;
 };
 SerialList.prototype = new CommandList();
 SerialList.prototype.execute = function() {
-    if (_count >= _commands.length) {
-        _self._dispatchComplete();
+	var home = this;
+    if (this.count >= this.commands.length) {
+        this.dispatchComplete();
     } else {
-        _currentCommand = _commands[_count];
-        _currentCommand.addEventListener('command_complete', function() {
-            _count++;
-            _self.execute();
+        this.currentCommand = this.commands[this.count];
+        this.currentCommand.addEventListener('command_complete', function() {
+            home.count++;
+            home.execute();
         });
-        _currentCommand.execute();
+        this.currentCommand.execute();
     }
 };
-SerialList.prototype.getCurrentCommand = function(){
-    return _currentCommand;
-}
 /**
  * 新しいParallelListコマンドを作成します。
  * param {Array} param commands
  **/
-var ParallelList = function() {
-    this.constructor(commands);
+var ParallelList = function(commands) {
+	this.commands = commands ? commands.slice() : [];
+    //this.constructor(commands);
 };
 ParallelList.prototype = new CommandList();
 ParallelList.prototype.execute = function(){
-    var len = _commands.length;
-    _count = 0;
+    var len = this.commands.length;
+    this.count = 0;
+    var home = this;
     for(var i=0; i<len; i++){
-        _commands[i].addEventListener('command_complete',function(){
-            if(++_count >= len){
-                _self.dispatchComplete();
+        this.commands[i].addEventListener('command_complete',function(){
+            if(++home.count >= len){
+                home.dispatchComplete();
             }
         });
-        _commands[i].execute();
+        this.commands[i].execute();
     }
 };
 /**
  * 新しいTraceコマンドを作成します。
  * @param {Array} params
 **/
-var Trace = function(params){
-    _params = params.slice();
+var Trace = function(){
+	this.params = [];
+    if(arguments){
+    	for(var i=0; i<arguments.length; i++){
+    		this.params.push(arguments[i]);
+    	}
+    }
 };
 Trace.prototype = new Command();
 Trace.prototype.execute = function(){
-    console.log(_params);
-    _self.dispatchComplete();
+    console.log(this.params);
+    this.dispatchComplete();
 }

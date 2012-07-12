@@ -3,31 +3,38 @@ var Event = function() {
 	this.context;
 };
 var EventDispatcher = function() {
-	_listeners = {};
-	_self = this;
+	this.listeners = {};
 };
 EventDispatcher.prototype.addEventListener = function(type,handler,context){
-	if(!_listeners[type]){
-		_listeners[type] = [];
+	var listen = this.listeners;
+	if(!listen[type]){
+		listen[type] = [];
 	}
-	listeners[type].push({handler:handler,context:context});
+	listen[type].push({handler:handler,context:context || this});
+	//console.log(this,arguments.callee.prototype.constructor);
 };
 EventDispatcher.prototype.removeEventListener = function(type,handler){
-	if(_listeners[type]){
-		for(var i=0; i<_listeners[type].length; i++){
-			var obj = _listener[type][i];
+	var listen = this.listeners;
+	if(listen[type]){
+		for(var i=0; i<listen[type].length; i++){
+			var obj = listen[type][i];
 			if(obj['handler'] == handler){
-				_listener[type].splice(i,1);
+				listen[type].splice(i,1);
 			}
 		}
 	}
 }
-EventDispatcher.prototype.dispatchEvent = function(type){
+EventDispatcher.prototype.dispatchEvent = function(type,context){
+	var listen = this.listeners;
 	var e = new Event();
 	e.target = this;
-	for(var i=0; i<_listeners[type].length; i++){
-		var obj = _listeners[type][i];
-		e.context = obj['context'];
-		obj['handler'](e);
+	if(this.listeners[type]){
+		for(var i=0; i<listen[type].length; i++){
+			var obj = listen[type][i];
+			e.context = obj['context'];
+			if(e.context == this){
+				obj['handler'](e);
+			}
+		}
 	}
 }
