@@ -19,8 +19,8 @@ Command.prototype.dispatchComplete = function() {
     this.dispatchEvent('command_complete');
 };
 /**
- * 新しいWaitコマンドを作成します。
- * @param {Number} delay ミリ秒で指定します。
+ * 新しいWaitコマンドを作成。
+ * @param {Number} delay ミリ秒で指定。
  */
 var Wait = function(delay) {
     this.delay = delay;
