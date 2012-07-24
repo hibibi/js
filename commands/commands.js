@@ -1,9 +1,9 @@
 /**
  * 新しいCommandインスタンスを作成します。
  * @class Commandのコアクラス
- * @param {Object} scope Functionのスコープです。
- * @param {Function} func コマンドで起動するfunctionです。
- * @param {Array} params functionの引数です。
+ * @param {Object} scope Functionのスコープ。
+ * @param {Function} func コマンドで起動するfunction。
+ * @param {Array} params functionのパラメータを指定。
  */
 var Command = function(scope, func, params) {
     this.scope = scope;
